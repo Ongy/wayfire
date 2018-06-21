@@ -58,7 +58,7 @@ void handle_subsurface_destroyed(wl_listener*, void *data)
     auto wlr_surf = (wlr_surface*) data;
     auto surface = wf_surface_from_void(wlr_surf->data);
 
-    log_error ("subsurface destroyed");
+    log_error ("subsurface destroyed %p", wlr_surf);
 
     surface->unmap();
     surface->dec_keep_count();
