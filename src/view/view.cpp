@@ -413,11 +413,13 @@ void wayfire_view_t::take_snapshot()
 
     int scale = surface->current->scale;
     if (buffer_geometry.width * scale != offscreen_buffer.fb_width
-        || buffer_geometry.height * scale != offscreen_buffer.fb_height)
+        || buffer_geometry.height * scale != offscreen_buffer.fb_height
+        || offscreen_buffer.fb_scale != scale)
     {
         offscreen_buffer.fini();
     }
 
+    offscreen_buffer.fb_scale = scale;
     if (!offscreen_buffer.valid())
     {
         offscreen_buffer.init(buffer_geometry.width * scale, buffer_geometry.height * scale);
@@ -462,8 +464,8 @@ void wayfire_view_t::render_fb(int x, int y, pixman_region32_t* damage, int fb)
         obox.x = x + (vbox.x - output_geometry.x);
         obox.y = y + (vbox.y - output_geometry.y);
 
-        obox.width = offscreen_buffer.fb_width / output->handle->scale;
-        obox.height = offscreen_buffer.fb_height / output->handle->scale;
+        obox.width = offscreen_buffer.fb_width / offscreen_buffer.fb_scale;
+        obox.height = offscreen_buffer.fb_height / offscreen_buffer.fb_scale;
 
         wf_point center;
         center.x = (wm.x - output_geometry.x) + x + wm.width / 2.0;

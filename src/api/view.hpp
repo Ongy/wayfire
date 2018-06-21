@@ -184,6 +184,7 @@ class wayfire_view_t : public wayfire_surface_t
             /* used to store output_geometry when the view has been destroyed */
             int32_t output_x = 0, output_y = 0;
             int32_t fb_width = 0, fb_height = 0;
+            int32_t fb_scale = 1;
             pixman_region32_t cached_damage;
 
             void init(int w, int h);
