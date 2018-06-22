@@ -698,6 +698,9 @@ void render_manager::workspace_stream_update(wf_workspace_stream *stream,
     {
         for (auto& icon : core->input->drag_icons)
         {
+            if (!icon->is_mapped())
+                return;
+
             icon->set_output(output);
             icon->for_each_surface([&] (wayfire_surface_t *surface, int x, int y)
                                    {

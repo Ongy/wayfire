@@ -364,7 +364,10 @@ wayfire_surface_t* input_manager::update_touch_position(uint32_t time, int32_t i
     update_touch_focus(new_focus, time, id, x, y);
 
     for (auto& icon : drag_icons)
-        icon->update_output_position();
+    {
+        if (icon->is_mapped())
+            icon->update_output_position();
+    }
 
     return new_focus;
 }
@@ -546,15 +549,21 @@ static void handle_request_set_cursor(wl_listener*, void *data)
 static void handle_drag_icon_map(wl_listener* listener, void *data)
 {
     auto wlr_icon = (wlr_drag_icon*) data;
-    auto icon = (wf_drag_icon*) wlr_icon->surface->data;
+    auto icon = wf_surface_from_void(wlr_icon->data);
+    icon->map(wlr_icon->surface);
+}
 
+static void handle_drag_icon_unmap(wl_listener* listener, void *data)
+{
+    auto wlr_icon = (wlr_drag_icon*) data;
+    auto icon = wf_surface_from_void(wlr_icon->data);
     icon->unmap();
 }
 
 static void handle_drag_icon_destroy(wl_listener* listener, void *data)
 {
     auto wlr_icon = (wlr_drag_icon*) data;
-    auto icon = (wf_drag_icon*) wlr_icon->surface->data;
+    auto icon = (wf_drag_icon*) wlr_icon->data;
 
     auto it = std::find_if(core->input->drag_icons.begin(),
                            core->input->drag_icons.end(),
@@ -570,14 +579,15 @@ static void handle_drag_icon_destroy(wl_listener* listener, void *data)
 wf_drag_icon::wf_drag_icon(wlr_drag_icon *ic)
     : wayfire_surface_t(nullptr), icon(ic)
 {
-    map_ev.notify  = handle_drag_icon_map;
-    destroy.notify = handle_drag_icon_destroy;
+    map_ev.notify   = handle_drag_icon_map;
+    unmap_ev.notify = handle_drag_icon_unmap;
+    destroy.notify  = handle_drag_icon_destroy;
 
     wl_signal_add(&icon->events.map, &map_ev);
+    wl_signal_add(&icon->events.unmap, &unmap_ev);
     wl_signal_add(&icon->events.destroy, &destroy);
 
-    icon->surface->data = this;
-    map(icon->surface);
+    icon->data = this;
 }
 
 wf_point wf_drag_icon::get_output_position()
@@ -798,7 +808,10 @@ void input_manager::update_cursor_position(uint32_t time_msec, bool real_update)
     wlr_seat_pointer_notify_motion(core->input->seat, time_msec, sx, sy);
 
     for (auto& icon : drag_icons)
-        icon->update_output_position();
+    {
+        if (icon->is_mapped())
+            icon->update_output_position();
+    }
 }
 
 void input_manager::handle_pointer_motion(wlr_event_pointer_motion *ev)
