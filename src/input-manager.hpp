@@ -36,7 +36,7 @@ struct wf_keyboard
 struct wf_drag_icon : public wayfire_surface_t
 {
     wlr_drag_icon *icon;
-    wl_listener map_ev, destroy;
+    wl_listener map_ev, unmap_ev, destroy;
 
     wf_drag_icon(wlr_drag_icon *icon);
 
