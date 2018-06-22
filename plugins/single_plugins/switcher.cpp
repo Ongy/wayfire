@@ -726,6 +726,9 @@ class view_switcher : public wayfire_plugin_t
 
             grab_interface->grab();
             fast_switch_next();
+
+            output->connect_signal("destroy-view", &destroyed);
+            output->connect_signal("detach-view", &destroyed);
         }
     }
 
