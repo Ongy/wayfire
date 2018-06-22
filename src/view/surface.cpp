@@ -95,13 +95,7 @@ wayfire_surface_t::~wayfire_surface_t()
     }
 
     for (auto c : surface_children)
-    {
-        /* if we are a decoration window, then we shouldn't
-         * destroy children(contained view) like that */
-        auto cast = dynamic_cast<wayfire_view_t*> (c);
-        if (!cast)
-            c->destruct();
-    }
+        c->parent_surface = nullptr;
 }
 
 wayfire_surface_t *wayfire_surface_t::get_main_surface()
@@ -213,13 +207,13 @@ void wayfire_surface_t::damage(pixman_region32_t *region)
     auto rects = pixman_region32_rectangles(region, &n_rect);
 
     for (int i = 0; i < n_rect; i++)
-        damage({rects[i].x1, rects[i].y1, rects[i].x2 - rects[i].x1, rects[i].y2 - rects[i].y1});
+        damage(wlr_box_from_pixman_box(rects[i]));
 }
 
 void wayfire_surface_t::damage(const wlr_box& box)
 {
-    assert(parent_surface);
-    parent_surface->damage(box);
+    if (parent_surface)
+        parent_surface->damage(box);
 }
 
 void wayfire_surface_t::damage()
