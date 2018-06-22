@@ -40,7 +40,6 @@ struct animation_hook
 
     animation_hook(wayfire_view view, wf_duration duration)
     {
-        log_info("create animation");
         this->view = view;
         output = view->get_output();
 
@@ -71,8 +70,10 @@ struct animation_hook
                 finalize();
         };
 
-        output->connect_signal("destroy-view", &view_removed);
         output->connect_signal("detach-view", &view_removed);
+
+        if (!close_animation)
+            output->connect_signal("unmap-view", &view_removed);
     }
 
     void finalize()
@@ -80,7 +81,7 @@ struct animation_hook
         output->render->rem_effect(&hook, WF_OUTPUT_EFFECT_POST);
 
         output->disconnect_signal("detach-view", &view_removed);
-        output->disconnect_signal("destroy-view", &view_removed);
+        output->disconnect_signal("unmap-view", &view_removed);
 
         /* make sure we "unhide" the view */
         view->alpha = 1.0;
@@ -186,7 +187,6 @@ class wayfire_animation : public wayfire_plugin_t {
     void fini()
     {
         output->disconnect_signal("create-view", &map_cb);
-        output->disconnect_signal("destroy-view", &unmap_cb);
         output->disconnect_signal("wake", &wake_cb);
         output->disconnect_signal("output-fade-in-request", &wake_cb);
     }

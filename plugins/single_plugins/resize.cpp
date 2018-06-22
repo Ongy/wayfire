@@ -93,7 +93,7 @@ class wayfire_resize : public wayfire_plugin_t {
         };
 
         output->connect_signal("detach-view", &view_destroyed);
-        output->connect_signal("destroy-view", &view_destroyed);
+        output->connect_signal("unmap-view", &view_destroyed);
     }
 
     void resize_requested(signal_data *data)

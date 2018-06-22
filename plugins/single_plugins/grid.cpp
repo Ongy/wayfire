@@ -104,7 +104,7 @@ class wayfire_grid : public wayfire_plugin_t {
                 stop_animation();
         };
 
-        output->connect_signal("destroy-view", &view_destroyed_cb);
+        output->connect_signal("unmap-view", &view_destroyed_cb);
         output->connect_signal("detach-view", &view_destroyed_cb);
     }
 

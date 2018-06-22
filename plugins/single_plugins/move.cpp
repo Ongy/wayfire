@@ -106,7 +106,7 @@ class wayfire_move : public wayfire_plugin_t
                 }
             };
             output->connect_signal("detach-view", &view_destroyed);
-            output->connect_signal("destroy-view", &view_destroyed);
+            output->connect_signal("unmap-view", &view_destroyed);
         }
 
         void move_requested(signal_data *data)

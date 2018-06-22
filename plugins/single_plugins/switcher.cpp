@@ -210,7 +210,7 @@ class view_switcher : public wayfire_plugin_t
         output->render->damage(NULL);
         output->render->add_effect(&hook, WF_OUTPUT_EFFECT_PRE);
 
-        output->connect_signal("destroy-view", &destroyed);
+        output->connect_signal("unmap-view", &destroyed);
         output->connect_signal("detach-view", &destroyed);
 
         setup_graphics();
@@ -691,7 +691,7 @@ class view_switcher : public wayfire_plugin_t
         state.active = false;
         view_chosen(current_view_index);
 
-        output->disconnect_signal("destroy-view", &destroyed);
+        output->disconnect_signal("unmap-view", &destroyed);
         output->disconnect_signal("detach-view", &destroyed);
     }
 
@@ -727,7 +727,7 @@ class view_switcher : public wayfire_plugin_t
             grab_interface->grab();
             fast_switch_next();
 
-            output->connect_signal("destroy-view", &destroyed);
+            output->connect_signal("unmap-view", &destroyed);
             output->connect_signal("detach-view", &destroyed);
         }
     }
@@ -750,7 +750,7 @@ class view_switcher : public wayfire_plugin_t
         state.active = false;
         state.in_fast_switch = false;
 
-        output->disconnect_signal("destroy-view", &destroyed);
+        output->disconnect_signal("unmap-view", &destroyed);
         output->disconnect_signal("detach-view", &destroyed);
     }
 
