@@ -4,6 +4,7 @@ extern "C"
 #define static
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_matrix.h>
+#include <wlr/types/wlr_buffer.h>
 #include <wlr/util/region.h>
 #undef static
 }
@@ -338,7 +339,7 @@ void wayfire_surface_t::render_fbo(int x, int y, int fb_w, int fb_h,
     wlr_matrix_scale(matrix, 1.0 / fb_geometry.width, 1.0 / fb_geometry.height);
 
     wlr_renderer_scissor(core->renderer, NULL);
-    wlr_render_texture(core->renderer, surface->texture, matrix, 0, 0, 1.0f);
+    wlr_render_texture(core->renderer, surface->buffer->texture, matrix, 0, 0, 1.0f);
 }
 
 void wayfire_surface_t::render(int x, int y, wlr_box *damage)
@@ -360,7 +361,7 @@ void wayfire_surface_t::render(int x, int y, wlr_box *damage)
     auto box = get_scissor_box(output, *damage);
     wlr_renderer_scissor(rr, &box);
 
-    wlr_render_texture_with_matrix(rr, surface->texture, matrix, alpha);
+    wlr_render_texture_with_matrix(rr, surface->buffer->texture, matrix, alpha);
 }
 
 void wayfire_surface_t::render_pixman(int x, int y, pixman_region32_t *damage)
