@@ -1,3 +1,7 @@
+#define _GNU_SOURCE
+#include <sched.h>
+#undef _GNU_SOURCE
+
 #include <unistd.h>
 #include <sys/wait.h>
 #include <fcntl.h>
@@ -1732,30 +1736,53 @@ void wayfire_core::erase_view(wayfire_view v)
         */
 }
 
+struct child_args {
+	const char *command;
+	const char *display;
+	const char *wayland_display;
+};
+
+static int child_runner(void *arg)
+{
+	const struct child_args *args = (struct child_args *)arg;
+
+	/* Actual child runner. This runs in the created process */
+	setenv("WAYLAND_DISPLAY", args->wayland_display, 1);
+	setenv("DISPLAY", args->display, 1);
+	exit(execl("/bin/sh", "/bin/bash", "-c", args->command, NULL));
+}
+
+static int intermediate_child(void *arg)
+{
+	uint8_t stack[2 * 1024 * 1024];
+	/* Again, clone with _VM and _VFORK to prevent copy of the VMEM tables
+	 * Also copy a bunch of other things, 'cause why not
+	 */
+	clone(child_runner, (void *)&stack, (int) (CLONE_VM | CLONE_VFORK | CLONE_FILES | CLONE_FS | CLONE_IO), arg);
+	exit(0);
+}
+
 void wayfire_core::run(const char *command)
 {
-    pid_t pid = fork();
+    /* Set up the arguments for the forked process */
+    struct child_args args;
+    args.command = command;
+    args.wayland_display = wayland_display.c_str();
+    auto xdisp = ":" + std::to_string(api->xwayland->display);
+    args.display = xdisp.c_str();
 
-    /* The following is a "hack" for disowning the child processes,
-     * otherwise they will simply stay as zombie processes */
-    if (!pid) {
-        if (!fork()) {
-            setenv("WAYLAND_DISPLAY", wayland_display.c_str(), 1);
-            auto xdisp = ":" + std::to_string(api->xwayland->display);
-            setenv("DISPLAY", xdisp.c_str(), 1);
+    /* Child stack. This could probably be quite a bit smaller */
+    uint8_t stack[4 * 1024 * 1024];
+    pid_t pid;
+    /* Clone the child with _VM and _VFORK, this allows us to *not* copy all
+     * the VMEM stuff.
+     * The child will have the same VMEM tables, but we are safe, because the
+     * parent waits for it to either exec (actual child) or exit (intermediate)
+     */
+    clone(intermediate_child, (void *)&stack, (int) (CLONE_VM | CLONE_VFORK | CLONE_PARENT_SETTID), (void *)&args, &pid);
 
-            int dev_null = open("/dev/null", O_WRONLY);
-            dup2(dev_null, 1);
-            dup2(dev_null, 2);
-
-            exit(execl("/bin/sh", "/bin/bash", "-c", command, NULL));
-        } else {
-            exit(0);
-        }
-    } else {
-        int status;
-        waitpid(pid, &status, 0);
-    }
+    int status;
+    waitpid(pid, &status, 0);
 }
 
 void wayfire_core::move_view_to_output(wayfire_view v, wayfire_output *new_output)
